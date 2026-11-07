@@ -1,0 +1,11 @@
+# Unreal Engine generated folders
+Binaries/
+Intermediate/
+DerivedDataCache/
+Saved/
+
+# IDE
+.idea/
+
+# Rider
+*.sln.DotSettings.user
