@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "GameFramework/Actor.h"
 #include "RoadCreatorPlugin/Enum/RoadType.h"
+#include "RoadCreatorPlugin/Struct/SRoadPointParameter.h"
 #include "RoadCreator.generated.h"
 
 UCLASS()
@@ -25,15 +27,36 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(CallInEditor, Category = "RoadCreator")
 	virtual void GenerateRoad();
 	
+	UFUNCTION(BlueprintCallable, Category = "RoadCreator")
+	virtual void LiveGenerateRoad();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
-	float TestSize = 0.0f;
+	bool LiveGeneration = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator", meta = (ClampMin = 1))
+	int FrameGap = 1;
+	
+	UPROPERTY()
+	int CurrentFrameGap;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USplineComponent* SplineComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
 	TMap<ERoadType, TObjectPtr<UStaticMesh>> RoadMeshes; 
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
+	UStaticMesh* RoadMeshTemp;
+	
+	UPROPERTY()
+	TArray<USplineMeshComponent*> GeneratedSplineMeshes;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadPointParameters")
+	TArray<FSRoadPointParameter> RoadPointParameters;
+	
+	UFUNCTION(BlueprintCallable, Category = "RoadPointParameters")
+	void SetRoadPointParameters();
 };
