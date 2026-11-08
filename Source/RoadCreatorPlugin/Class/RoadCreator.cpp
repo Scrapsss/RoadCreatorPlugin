@@ -52,35 +52,25 @@ void ARoadCreator::GenerateRoad()
 	
 	for (int i = 0; i < NumberOfMeshes; i++)
 	{
-		FVector StartPos = SplineComponent->GetLocationAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::Local);
-		FVector EndPos = SplineComponent->GetLocationAtDistanceAlongSpline(FMath::Min(MeshSize.X * (i + 1),SplineComponent->GetSplineLength()), ESplineCoordinateSpace::Local);
+		FVector StartPos = SplineComponent->GetLocationAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::World);
+		FVector EndPos = SplineComponent->GetLocationAtDistanceAlongSpline(FMath::Min(MeshSize.X * (i + 1),SplineComponent->GetSplineLength()), ESplineCoordinateSpace::World);
 		
-		FVector StartTang = SplineComponent->GetTangentAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::Local);
-		FVector EndTang = SplineComponent->GetTangentAtDistanceAlongSpline(MeshSize.X * (i + 1), ESplineCoordinateSpace::Local);
+		FVector StartTang = SplineComponent->GetTangentAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::World);
+		FVector EndTang = SplineComponent->GetTangentAtDistanceAlongSpline(MeshSize.X * (i + 1), ESplineCoordinateSpace::World);
 		
 		StartTang = StartTang.GetClampedToMaxSize(MeshSize.X);
 		EndTang = EndTang.GetClampedToMaxSize(MeshSize.X);
 		
 		USplineMeshComponent* splineMesh = NewObject<USplineMeshComponent>(this);
-		splineMesh->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		splineMesh->AttachToComponent(SplineComponent, FAttachmentTransformRules::KeepWorldTransform);
 		splineMesh->SetStaticMesh(RoadMeshTemp);
-		splineMesh->RegisterComponent();
+		splineMesh->SetForwardAxis(ESplineMeshAxis::Y);
 		splineMesh->SetStartAndEnd(StartPos, StartTang, EndPos, EndTang);
+		
+		splineMesh->RegisterComponent();
 		
 		GeneratedSplineMeshes.Add(splineMesh);
 	}
-}
-
-void ARoadCreator::LiveGenerateRoad()
-{
-	if (!LiveGeneration) return;
-	
-	if (CurrentFrameGap % FrameGap == 0)
-	{
-		GenerateRoad();
-		CurrentFrameGap = 0;
-	}
-	CurrentFrameGap++;
 }
 
 void ARoadCreator::SetRoadPointParameters()

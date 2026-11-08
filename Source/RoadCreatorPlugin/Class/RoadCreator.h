@@ -30,18 +30,6 @@ public:
 	UFUNCTION(CallInEditor, Category = "RoadCreator")
 	virtual void GenerateRoad();
 	
-	UFUNCTION(BlueprintCallable, Category = "RoadCreator")
-	virtual void LiveGenerateRoad();
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
-	bool LiveGeneration = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator", meta = (ClampMin = 1))
-	int FrameGap = 1;
-	
-	UPROPERTY()
-	int CurrentFrameGap;
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USplineComponent* SplineComponent;
 	
