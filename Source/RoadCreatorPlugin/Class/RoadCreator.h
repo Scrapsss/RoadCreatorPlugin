@@ -39,6 +39,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
 	UStaticMesh* RoadMeshTemp;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
+	FRotator RoadRotation;
+	
 	UPROPERTY()
 	TArray<USplineMeshComponent*> GeneratedSplineMeshes;
 	

@@ -52,19 +52,23 @@ void ARoadCreator::GenerateRoad()
 	
 	for (int i = 0; i < NumberOfMeshes; i++)
 	{
-		FVector StartPos = SplineComponent->GetLocationAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::World);
-		FVector EndPos = SplineComponent->GetLocationAtDistanceAlongSpline(FMath::Min(MeshSize.X * (i + 1),SplineComponent->GetSplineLength()), ESplineCoordinateSpace::World);
+		FVector StartPos = SplineComponent->GetLocationAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::Local);
+		FVector EndPos = SplineComponent->GetLocationAtDistanceAlongSpline(FMath::Min(MeshSize.X * (i + 1),SplineComponent->GetSplineLength()), ESplineCoordinateSpace::Local);
 		
-		FVector StartTang = SplineComponent->GetTangentAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::World);
-		FVector EndTang = SplineComponent->GetTangentAtDistanceAlongSpline(MeshSize.X * (i + 1), ESplineCoordinateSpace::World);
+		FVector StartTang = SplineComponent->GetTangentAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::Local);
+		FVector EndTang = SplineComponent->GetTangentAtDistanceAlongSpline(MeshSize.X * (i + 1), ESplineCoordinateSpace::Local);
 		
 		StartTang = StartTang.GetClampedToMaxSize(MeshSize.X);
 		EndTang = EndTang.GetClampedToMaxSize(MeshSize.X);
 		
 		USplineMeshComponent* splineMesh = NewObject<USplineMeshComponent>(this);
-		splineMesh->AttachToComponent(SplineComponent, FAttachmentTransformRules::KeepWorldTransform);
+		splineMesh->SetMobility(EComponentMobility::Movable);
+
+		splineMesh->SetupAttachment(SplineComponent);
 		splineMesh->SetStaticMesh(RoadMeshTemp);
 		splineMesh->SetForwardAxis(ESplineMeshAxis::Y);
+		splineMesh->SetStartRoll(FMath::DegreesToRadians(-90.0f));
+		splineMesh->SetEndRoll(FMath::DegreesToRadians(-90.0f));
 		splineMesh->SetStartAndEnd(StartPos, StartTang, EndPos, EndTang);
 		
 		splineMesh->RegisterComponent();
@@ -77,4 +81,3 @@ void ARoadCreator::SetRoadPointParameters()
 {
 	RoadPointParameters.SetNum(SplineComponent->GetNumberOfSplinePoints());
 }
-
