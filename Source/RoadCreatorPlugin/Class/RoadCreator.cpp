@@ -70,6 +70,9 @@ void ARoadCreator::GenerateRoad()
 		splineMesh->SetStartRoll(FMath::DegreesToRadians(-90.0f));
 		splineMesh->SetEndRoll(FMath::DegreesToRadians(-90.0f));
 		splineMesh->SetStartAndEnd(StartPos, StartTang, EndPos, EndTang);
+		splineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		splineMesh->SetCollisionResponseToAllChannels(ECR_Block);
+		splineMesh->UpdateMesh();
 		
 		splineMesh->RegisterComponent();
 		
