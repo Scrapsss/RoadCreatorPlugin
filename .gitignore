@@ -9,3 +9,9 @@ Saved/
 
 # Rider
 *.sln.DotSettings.user
+
+# Keep RoadCreatorPlugin binaries
+!Binaries/
+!Binaries/Win64/
+!Binaries/Win64/UnrealEditor.modules
+!Binaries/Win64/UnrealEditor-RoadCreatorPlugin.dll
