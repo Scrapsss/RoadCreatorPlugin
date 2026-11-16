@@ -40,7 +40,7 @@ public:
 	UStaticMesh* RoadMeshTemp;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
-	FRotator RoadRotation;
+	float DefaultWidth;
 	
 	UPROPERTY()
 	TArray<USplineMeshComponent*> GeneratedSplineMeshes;
@@ -50,4 +50,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "RoadPointParameters")
 	void SetRoadPointParameters();
+	
+	UFUNCTION()
+	TOptional<FSRoadPointParameter> GetRoadPointParameter(float DistanceAlongSpline);
 };

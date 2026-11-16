@@ -12,5 +12,5 @@ struct FSRoadPointParameter
 	ERoadType RoadType = ERoadType::Road;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Width = 100.0f;
+	float Width = 1.0f;
 };
