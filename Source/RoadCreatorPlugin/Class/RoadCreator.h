@@ -39,9 +39,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
 	UStaticMesh* RoadMeshTemp;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
-	float DefaultWidth;
-	
 	UPROPERTY()
 	TArray<USplineMeshComponent*> GeneratedSplineMeshes;
 	
@@ -52,5 +49,8 @@ public:
 	void SetRoadPointParameters();
 	
 	UFUNCTION()
-	TOptional<FSRoadPointParameter> GetRoadPointParameter(float DistanceAlongSpline);
+	int GetRoadPointParameter(float DistanceAlongSpline);
+	
+	UFUNCTION()
+	UStaticMesh* GetRoadStaticMesh(FSRoadPointParameter RoadPointParameter);
 };
