@@ -7,6 +7,7 @@
 #include "Components/SplineMeshComponent.h"
 #include "GameFramework/Actor.h"
 #include "RoadCreatorPlugin/Enum/RoadType.h"
+#include "RoadCreatorPlugin/Struct/SDataSplineMesh.h"
 #include "RoadCreatorPlugin/Struct/SRoadPointParameter.h"
 #include "RoadCreator.generated.h"
 
@@ -27,8 +28,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
-	UFUNCTION(CallInEditor, Category = "RoadCreator")
+	UFUNCTION(BlueprintCallable, Category = "RoadCreator")
 	virtual void GenerateRoad();
+	
+	UFUNCTION(CallInEditor, Category = "RoadCreator")
+	virtual void OldGenerateRoad();
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USplineComponent* SplineComponent;
@@ -52,5 +56,8 @@ public:
 	int GetRoadPointParameter(float DistanceAlongSpline);
 	
 	UFUNCTION()
-	UStaticMesh* GetRoadStaticMesh(FSRoadPointParameter RoadPointParameter);
+	UStaticMesh* GetRoadStaticMesh(ERoadType RoadType);
+	
+	UFUNCTION()
+	bool IsSplineMeshDifferent(USplineMeshComponent* FirstSplineMesh, FSDataSplineMesh SecondSplineMesh);
 };
