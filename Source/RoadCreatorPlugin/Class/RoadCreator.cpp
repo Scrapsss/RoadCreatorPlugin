@@ -29,6 +29,9 @@ void ARoadCreator::Tick(float DeltaTime)
 
 void ARoadCreator::GenerateRoad()
 {
+	// Si le mode n'est pas activé alors on lance pas la generation
+	if (!LiveGeneration) return;
+	
 	// Si aucun mesh n'est renseigné alors on coupe
 	if (RoadMeshes.Num() <= 0)
 	{
@@ -165,7 +168,7 @@ void ARoadCreator::GenerateRoad()
 			SplineMesh->SetStaticMesh(NewSplineMesh.StaticMesh);
 			SplineMesh->SetStartScale(NewSplineMesh.StartScale);
 			SplineMesh->SetEndScale(NewSplineMesh.EndScale);
-			SplineMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			SplineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			SplineMesh->SetCollisionResponseToAllChannels(ECR_Block);
 			SplineMesh->UpdateMesh();
 		

@@ -34,6 +34,9 @@ public:
 	UFUNCTION(CallInEditor, Category = "RoadCreator")
 	virtual void OldGenerateRoad();
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
+	bool LiveGeneration = true;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USplineComponent* SplineComponent;
 	
