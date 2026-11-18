@@ -135,7 +135,34 @@ void ARoadCreator::GenerateRoad()
 		// Maintenant on compare ce nouveau mesh calculé avec celui déjà en place pour voir si jamais il est different
 		if (GeneratedSplineMeshes.Num() > i) // Si il éxiste un mesh avec le même "ID"
 		{
-			if (IsSplineMeshDifferent(GeneratedSplineMeshes[i], NewSplineMesh))
+			if (GeneratedSplineMeshes[i] == nullptr)
+			{
+				GeneratedSplineMeshes.RemoveAt(i);
+				USplineMeshComponent* SplineMesh = NewObject<USplineMeshComponent>(this);
+				
+				SplineMesh->SetMobility(EComponentMobility::Movable);
+				SplineMesh->SetupAttachment(SplineComponent);
+				SplineMesh->SetForwardAxis(ESplineMeshAxis::Y);
+				SplineMesh->SetStartRoll(FMath::DegreesToRadians(-90.0f));
+				SplineMesh->SetEndRoll(FMath::DegreesToRadians(-90.0f));
+				SplineMesh->SetStartAndEnd(
+					NewSplineMesh.StartPos, 
+					NewSplineMesh.StartTang,
+					NewSplineMesh.EndPos,
+					NewSplineMesh.EndTang);
+				SplineMesh->SetStaticMesh(NewSplineMesh.StaticMesh);
+				SplineMesh->SetStartScale(NewSplineMesh.StartScale);
+				SplineMesh->SetEndScale(NewSplineMesh.EndScale);
+				SplineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				SplineMesh->SetCollisionResponseToAllChannels(ECR_Block);
+				SplineMesh->UpdateMesh();
+		
+				SplineMesh->RegisterComponent();
+				
+				GeneratedSplineMeshes.Add(SplineMesh);
+				
+			}
+			else if (IsSplineMeshDifferent(GeneratedSplineMeshes[i], NewSplineMesh))
 			{
 				USplineMeshComponent* SplineMesh = GeneratedSplineMeshes[i];
 			
@@ -147,8 +174,7 @@ void ARoadCreator::GenerateRoad()
 				SplineMesh->SetStaticMesh(NewSplineMesh.StaticMesh);
 				SplineMesh->SetStartScale(NewSplineMesh.StartScale);
 				SplineMesh->SetEndScale(NewSplineMesh.EndScale);
-	
-				SplineMesh->RegisterComponent();
+				SplineMesh->UpdateMesh();
 			}
 		}
 		else
@@ -324,6 +350,8 @@ UStaticMesh* ARoadCreator::GetRoadStaticMesh(ERoadType RoadType)
 
 bool ARoadCreator::IsSplineMeshDifferent(USplineMeshComponent* FirstSplineMesh, FSDataSplineMesh SecondSplineMesh)
 {
+	if (FirstSplineMesh == nullptr) return false;
+	
 	if (FirstSplineMesh->GetStartPosition() != SecondSplineMesh.StartPos) return true;
 	if (FirstSplineMesh->GetEndPosition() != SecondSplineMesh.EndPos) return true;
 	if (FirstSplineMesh->GetStartTangent() != SecondSplineMesh.StartTang) return true;
