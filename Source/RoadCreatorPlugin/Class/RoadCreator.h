@@ -31,8 +31,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "RoadCreator")
 	virtual void GenerateRoad();
 	
+	/*
 	UFUNCTION(CallInEditor, Category = "RoadCreator")
 	virtual void OldGenerateRoad();
+	*/
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
 	bool LiveGeneration = false;
@@ -41,10 +43,10 @@ public:
 	USplineComponent* SplineComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
-	TMap<ERoadType, TObjectPtr<UStaticMesh>> RoadMeshes; 
+	TMap<ERoadType, TObjectPtr<UStaticMesh>> RoadMeshes;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
-	UStaticMesh* RoadMeshTemp;
+	float DefaultWidth = 1.0f;
 	
 	UPROPERTY()
 	TArray<USplineMeshComponent*> GeneratedSplineMeshes;

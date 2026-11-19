@@ -177,7 +177,7 @@ void ARoadCreator::GenerateRoad()
 				SplineMesh->UpdateMesh();
 			}
 		}
-		else
+		else // Si c'est un nouveau SplineMesh
 		{
 			USplineMeshComponent* SplineMesh = NewObject<USplineMeshComponent>(this);
 				
@@ -208,6 +208,7 @@ void ARoadCreator::GenerateRoad()
 	}
 }
 
+/*
 void ARoadCreator::OldGenerateRoad()
 {
 	// On détruit tout les anciens meshs placés
@@ -314,10 +315,16 @@ void ARoadCreator::OldGenerateRoad()
 		MeshNeighbour = splineMesh;
 	}
 }
+*/
 
 void ARoadCreator::SetRoadPointParameters()
 {
+	float PointAdded = SplineComponent->GetNumberOfSplinePoints() - RoadPointParameters.Num();
 	RoadPointParameters.SetNum(SplineComponent->GetNumberOfSplinePoints());
+	if (PointAdded > 0)
+	{
+		RoadPointParameters[RoadPointParameters.Num() - PointAdded].Width = DefaultWidth;
+	}
 }
 
 int ARoadCreator::GetRoadPointParameter(float DistanceAlongSpline)
