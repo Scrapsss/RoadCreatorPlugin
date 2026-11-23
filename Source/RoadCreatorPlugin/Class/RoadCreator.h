@@ -31,10 +31,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "RoadCreator")
 	virtual void GenerateRoad();
 	
-	/*
+	
 	UFUNCTION(CallInEditor, Category = "RoadCreator")
 	virtual void OldGenerateRoad();
-	*/
+	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadCreator")
 	bool LiveGeneration = false;
@@ -52,6 +52,9 @@ public:
 	TArray<USplineMeshComponent*> GeneratedSplineMeshes;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadPointParameters")
+	float WidthForAll = 1.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RoadPointParameters")
 	TArray<FSRoadPointParameter> RoadPointParameters;
 	
 	UFUNCTION(BlueprintCallable, Category = "RoadPointParameters")
@@ -65,4 +68,17 @@ public:
 	
 	UFUNCTION()
 	bool IsSplineMeshDifferent(USplineMeshComponent* FirstSplineMesh, FSDataSplineMesh SecondSplineMesh);
+	
+	UFUNCTION(CallInEditor, Category = "RoadPointParameters")
+	void SetAllPointsWidth();
+	
+	UFUNCTION(CallInEditor, Category = "RoadPointParameters")
+	void AddScale();
+	
+	UFUNCTION(CallInEditor, Category = "RoadPointParameters")
+	void SubtractScale();
+	
+	UFUNCTION(CallInEditor, Category = "RoadPointParameters")
+	void ModifyScale(float value, bool WantToSet);
+	
 };

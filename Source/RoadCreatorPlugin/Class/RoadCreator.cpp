@@ -1,6 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 #include "RoadCreator.h"
 
+#include "InterchangeResult.h"
+#include "SNegativeActionButton.h"
+#include "SWarningOrErrorBox.h"
 #include "Components/SplineMeshComponent.h"
 #include "RoadCreatorPlugin/Struct/SDataSplineMesh.h"
 
@@ -208,34 +211,52 @@ void ARoadCreator::GenerateRoad()
 	}
 }
 
-/*
+
 void ARoadCreator::OldGenerateRoad()
 {
-	// On détruit tout les anciens meshs placés
-	for (int i = 0; i < GeneratedSplineMeshes.Num(); i++)
+	// Si aucun mesh n'est renseigné alors on coupe
+	if (RoadMeshes.Num() <= 0)
 	{
-		if (IsValid(GeneratedSplineMeshes[i]))
-		{
-			GeneratedSplineMeshes[i]->DestroyComponent();
-		}
-	}
-	
-	GeneratedSplineMeshes.Empty();
-	
-	if (!RoadMeshTemp)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Aucun static mesh précisé !"));
 		return;
 	}
 	
-	// -- Road Generation
-	FVector MeshSize = (RoadMeshTemp->GetBoundingBox().Max - RoadMeshTemp->GetBoundingBox().Min);
+	// Pour éviter les crash :3
+	if (RoadMeshes.Find(ERoadType::Road)->Get() == nullptr)
+	{
+		return;
+	}
+	
+	// Définition du nombre de mesh à générer
+	FVector MeshSize = RoadMeshes.Find(ERoadType::Road)->Get()->GetBoundingBox().Max - RoadMeshes.Find(ERoadType::Road)->Get()->GetBoundingBox().Min;
 	int NumberOfMeshes = FMath::CeilToInt(SplineComponent->GetSplineLength() / MeshSize.X);
 	
-	USplineMeshComponent* MeshNeighbour = nullptr;
+	// -- Variable mémoire pour que chaque SplineMesh connaisse son précédent
+	USplineMeshComponent* PrecedentNeighbour = nullptr;
 	
+	// -- On va supprimer tout les Mesh en trop si jamais il y en a
+	if (GeneratedSplineMeshes.Num() > NumberOfMeshes)
+	{
+		for (int i = 0; i < GeneratedSplineMeshes.Num() - NumberOfMeshes; i++)
+		{
+			GeneratedSplineMeshes[GeneratedSplineMeshes.Num() - i - 1]->DestroyComponent();
+			GeneratedSplineMeshes.RemoveAt(GeneratedSplineMeshes.Num() - i - 1);
+		}
+	}
+	
+	// On va calculer chaque spline mesh et les comparer aux splines déjà éxistante (si il y en a)
 	for (int i = 0; i < NumberOfMeshes; i++)
 	{
+		// -- Variables Locales
+		FSDataSplineMesh NewSplineMesh;
+		int RoadParameterIndex = GetRoadPointParameter(MeshSize.X * i);
+		if (RoadParameterIndex == -1)
+		{
+			continue;
+		}
+		FSRoadPointParameter RoadParameters = RoadPointParameters[RoadParameterIndex];
+		// --
+		
+		// -- Calcul des positions & Tangentes
 		FVector StartPos = SplineComponent->GetLocationAtDistanceAlongSpline(MeshSize.X * i, ESplineCoordinateSpace::Local);
 		FVector EndPos = SplineComponent->GetLocationAtDistanceAlongSpline(FMath::Min(MeshSize.X * (i + 1),SplineComponent->GetSplineLength()), ESplineCoordinateSpace::Local);
 		
@@ -245,77 +266,130 @@ void ARoadCreator::OldGenerateRoad()
 		StartTang = StartTang.GetClampedToMaxSize(MeshSize.X);
 		EndTang = EndTang.GetClampedToMaxSize(MeshSize.X);
 		
-		USplineMeshComponent* splineMesh = NewObject<USplineMeshComponent>(this);
-		splineMesh->SetMobility(EComponentMobility::Movable);
-
-		splineMesh->SetupAttachment(SplineComponent);
-		splineMesh->SetStaticMesh(RoadMeshTemp);
-		splineMesh->SetForwardAxis(ESplineMeshAxis::Y);
+		NewSplineMesh.StartPos = StartPos;
+		NewSplineMesh.EndPos = EndPos;
 		
-		if (IsValid(MeshNeighbour))
+		NewSplineMesh.StartTang = StartTang;
+		NewSplineMesh.EndTang = EndTang;
+		// --
+		
+		// -- Calcul de la scale
+		// StartScale
+		if (PrecedentNeighbour)
 		{
-			splineMesh->SetStartScale(MeshNeighbour->GetEndScale());
+			NewSplineMesh.StartScale = PrecedentNeighbour->GetEndScale();
 		}
 		else
 		{
-			splineMesh->SetStartScale(FVector2D(1, 1));
+			NewSplineMesh.StartScale = FVector2D(1, RoadPointParameters[0].Width);
 		}
+		// --
 		
-		if (!GeneratedSplineMeshes.IsEmpty())
+		// EndScale
+		// Si il éxiste un point devant la route alors il faut gérer la scale en fonction de la largeur du prochain point
+		if (RoadParameterIndex + 1 <= RoadPointParameters.Num())
 		{
-			int RoadParameterIndex = GetRoadPointParameter(MeshSize.X * i);
-			FSRoadPointParameter RoadParameters = RoadPointParameters[RoadParameterIndex];
+			FSRoadPointParameter nextRoadParameter = RoadPointParameters[RoadParameterIndex + 1];
+			float StartDistance = SplineComponent->GetDistanceAlongSplineAtLocation(SplineComponent->GetSplinePointAt(RoadParameterIndex, ESplineCoordinateSpace::World).Position, ESplineCoordinateSpace::World);
+			float EndDistance = SplineComponent->GetDistanceAlongSplineAtLocation(SplineComponent->GetSplinePointAt(RoadParameterIndex + 1, ESplineCoordinateSpace::World).Position, ESplineCoordinateSpace::World);
 			
-			if (RoadMeshes.Num() > 0)
-			{
-				if (GetRoadStaticMesh(RoadParameters.RoadType) != nullptr)
-				{
-					splineMesh->SetStaticMesh(GetRoadStaticMesh(RoadParameters.RoadType));
-				}
-			}
+			float LerpValue = FMath::GetMappedRangeValueClamped(FVector2D(StartDistance,EndDistance), FVector2D(0, 1), MeshSize.X * i);
 			
-			// --------------
-			FSRoadPointParameter nextRoadParameter = RoadParameters;
-			if (RoadParameterIndex + 1 <= RoadPointParameters.Num())
-			{
-				nextRoadParameter = RoadPointParameters[RoadParameterIndex + 1];
-				float StartDistance = SplineComponent->GetDistanceAlongSplineAtLocation(SplineComponent->GetSplinePointAt(RoadParameterIndex, ESplineCoordinateSpace::World).Position, ESplineCoordinateSpace::World);
-				float EndDistance = SplineComponent->GetDistanceAlongSplineAtLocation(SplineComponent->GetSplinePointAt(RoadParameterIndex + 1, ESplineCoordinateSpace::World).Position, ESplineCoordinateSpace::World);
-			
-				float LerpValue = FMath::GetMappedRangeValueClamped(FVector2D(StartDistance,EndDistance), FVector2D(0, 1), MeshSize.X * i);
-			
-				float LerpedRoadScale = FMath::Lerp(RoadParameters.Width, nextRoadParameter.Width, LerpValue);
-				splineMesh->SetEndScale(FVector2D(1, LerpedRoadScale));
-			}
-			else
-			{
-				splineMesh->SetEndScale(FVector2D(1, RoadParameters.Width));
-			}
-			
+			float LerpedRoadScale = FMath::Lerp(RoadParameters.Width, nextRoadParameter.Width, LerpValue);
+			NewSplineMesh.EndScale = (FVector2D(1, LerpedRoadScale));
 		}
 		else
 		{
-			splineMesh->SetEndScale(FVector2D(1, 1));
+			NewSplineMesh.EndScale = (FVector2D(1, RoadParameters.Width));
 		}
-		;		
 		
+		// -- Parametrage de la staticMesh
+		UStaticMesh* RoadMesh = GetRoadStaticMesh(RoadParameters.RoadType);
+		if (RoadMesh != nullptr)
+		{
+			NewSplineMesh.StaticMesh = RoadMesh;
+		}
+		else
+		{
+			NewSplineMesh.StaticMesh = GetRoadStaticMesh(ERoadType::Road); // Normalement il y en aura forcément un
+		}
 		
-		splineMesh->SetStartRoll(FMath::DegreesToRadians(-90.0f));
-		splineMesh->SetEndRoll(FMath::DegreesToRadians(-90.0f));
-		splineMesh->SetStartAndEnd(StartPos, StartTang, EndPos, EndTang);
+		// Maintenant on compare ce nouveau mesh calculé avec celui déjà en place pour voir si jamais il est different
+		if (GeneratedSplineMeshes.Num() > i) // Si il éxiste un mesh avec le même "ID"
+		{
+			if (GeneratedSplineMeshes[i] == nullptr)
+			{
+				GeneratedSplineMeshes.RemoveAt(i);
+				USplineMeshComponent* SplineMesh = NewObject<USplineMeshComponent>(this);
+				
+				SplineMesh->SetMobility(EComponentMobility::Movable);
+				SplineMesh->SetupAttachment(SplineComponent);
+				SplineMesh->SetForwardAxis(ESplineMeshAxis::Y);
+				SplineMesh->SetStartRoll(FMath::DegreesToRadians(-90.0f));
+				SplineMesh->SetEndRoll(FMath::DegreesToRadians(-90.0f));
+				SplineMesh->SetStartAndEnd(
+					NewSplineMesh.StartPos, 
+					NewSplineMesh.StartTang,
+					NewSplineMesh.EndPos,
+					NewSplineMesh.EndTang);
+				SplineMesh->SetStaticMesh(NewSplineMesh.StaticMesh);
+				SplineMesh->SetStartScale(NewSplineMesh.StartScale);
+				SplineMesh->SetEndScale(NewSplineMesh.EndScale);
+				SplineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				SplineMesh->SetCollisionResponseToAllChannels(ECR_Block);
+				SplineMesh->UpdateMesh();
 		
+				SplineMesh->RegisterComponent();
+				
+				GeneratedSplineMeshes.Add(SplineMesh);
+				
+			}
+			else if (IsSplineMeshDifferent(GeneratedSplineMeshes[i], NewSplineMesh))
+			{
+				USplineMeshComponent* SplineMesh = GeneratedSplineMeshes[i];
+			
+				SplineMesh->SetStartAndEnd(
+					NewSplineMesh.StartPos, 
+					NewSplineMesh.StartTang,
+					NewSplineMesh.EndPos,
+					NewSplineMesh.EndTang);
+				SplineMesh->SetStaticMesh(NewSplineMesh.StaticMesh);
+				SplineMesh->SetStartScale(NewSplineMesh.StartScale);
+				SplineMesh->SetEndScale(NewSplineMesh.EndScale);
+				SplineMesh->UpdateMesh();
+			}
+		}
+		else // Si c'est un nouveau SplineMesh
+		{
+			USplineMeshComponent* SplineMesh = NewObject<USplineMeshComponent>(this);
+				
+			SplineMesh->SetMobility(EComponentMobility::Movable);
+			SplineMesh->SetupAttachment(SplineComponent);
+			SplineMesh->SetForwardAxis(ESplineMeshAxis::Y);
+			SplineMesh->SetStartRoll(FMath::DegreesToRadians(-90.0f));
+			SplineMesh->SetEndRoll(FMath::DegreesToRadians(-90.0f));
+			SplineMesh->SetStartAndEnd(
+				NewSplineMesh.StartPos, 
+				NewSplineMesh.StartTang,
+				NewSplineMesh.EndPos,
+				NewSplineMesh.EndTang);
+			SplineMesh->SetStaticMesh(NewSplineMesh.StaticMesh);
+			SplineMesh->SetStartScale(NewSplineMesh.StartScale);
+			SplineMesh->SetEndScale(NewSplineMesh.EndScale);
+			SplineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			SplineMesh->SetCollisionResponseToAllChannels(ECR_Block);
+			SplineMesh->UpdateMesh();
 		
-		splineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		splineMesh->SetCollisionResponseToAllChannels(ECR_Block);
-		splineMesh->UpdateMesh();
+			SplineMesh->RegisterComponent();
+				
+			GeneratedSplineMeshes.Add(SplineMesh);
+		}
 		
-		splineMesh->RegisterComponent();
-		
-		GeneratedSplineMeshes.Add(splineMesh);
-		MeshNeighbour = splineMesh;
+		// On set le mesh précedent pour la prochaine boucle
+		PrecedentNeighbour = GeneratedSplineMeshes[i];
 	}
 }
-*/
+
 
 void ARoadCreator::SetRoadPointParameters()
 {
@@ -369,4 +443,36 @@ bool ARoadCreator::IsSplineMeshDifferent(USplineMeshComponent* FirstSplineMesh, 
 	
 	return false;
 	
+}
+
+void ARoadCreator::ModifyScale(float value, bool WantToSet)
+{
+	for (FSRoadPointParameter& Point : RoadPointParameters)
+	{
+		if (WantToSet)
+		{
+			Point.Width = WidthForAll;
+		}
+		else
+		{
+			Point.Width += value;
+		}
+	}
+	
+	GenerateRoad();
+}
+
+void ARoadCreator::AddScale()
+{
+	ModifyScale(1, false);
+}
+
+void ARoadCreator::SubtractScale()
+{
+	ModifyScale(-1, false);
+}
+
+void ARoadCreator::SetAllPointsWidth()
+{
+	ModifyScale(0, true);
 }
